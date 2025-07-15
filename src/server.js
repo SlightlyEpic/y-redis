@@ -8,7 +8,10 @@ import * as json from 'lib0/json'
 import { registerYWebsocketServer } from '../src/ws.js'
 import * as promise from 'lib0/promise'
 
-const wsServerPublicKey = await ecdsa.importKeyJwk(json.parse(env.ensureConf('auth-public-key')))
+const jwkEndpoint = env.getConf('AUTH_PUBLIC_KEY_ENDPOINT');
+if(!jwkEndpoint) throw Error('AUTH_PUBLIC_KEY_ENDPOINT is required');
+const wsServerPublicKey = await ecdsa.importKeyJwk((await fetch(jwkEndpoint)).json())
+// const wsServerPublicKey = await ecdsa.importKeyJwk(json.parse(env.ensureConf('auth-public-key')))
 // const wsServerPrivateKey = await ecdsa.importKeyJwk(json.parse(env.ensureConf('auth-private-key')))
 
 class YWebsocketServer {
