@@ -10,7 +10,16 @@ import * as promise from 'lib0/promise'
 
 const jwkEndpoint = env.getConf('AUTH_PUBLIC_KEY_ENDPOINT');
 if(!jwkEndpoint) throw Error('AUTH_PUBLIC_KEY_ENDPOINT is required');
-const wsServerPublicKey = await ecdsa.importKeyJwk((await fetch(jwkEndpoint)).json())
+let wsServerPublicKey
+while(!wsServerPublicKey) {
+  try {
+    console.log(`Fetching JWK from ${jwkEndpoint}`);
+    wsServerPublicKey = await ecdsa.importKeyJwk((await fetch(jwkEndpoint)).json())
+  } catch(/**@type{any} */ e) {
+    console.log(`Error while fetching jwk: ${e.message}\n. Retrying in 15 seconds`);
+    await new Promise(r => setTimeout(r, 15_000));
+  }
+}
 // const wsServerPublicKey = await ecdsa.importKeyJwk(json.parse(env.ensureConf('auth-public-key')))
 // const wsServerPrivateKey = await ecdsa.importKeyJwk(json.parse(env.ensureConf('auth-private-key')))
 
