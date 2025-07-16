@@ -14,7 +14,13 @@ let wsServerPublicKey
 while(!wsServerPublicKey) {
   try {
     console.log(`Fetching JWK from ${jwkEndpoint}`);
-    wsServerPublicKey = await ecdsa.importKeyJwk((await fetch(jwkEndpoint)).json())
+    const keyJson = (await fetch(jwkEndpoint)).json();
+    const jwkJson = await(await fetch(jwkEndpoint)).json();
+    wsServerPublicKey = await crypto.subtle.importKey('jwk', jwkJson, {
+      name: "Ed25519",
+      namedCurve: "Ed25519"
+    }, false, ['verify']);
+    // wsServerPublicKey = await ecdsa.importKeyJwk(keyJson)
   } catch(/**@type{any} */ e) {
     console.log(`Error while fetching jwk: ${e.message}\n. Retrying in 15 seconds`);
     await new Promise(r => setTimeout(r, 15_000));
