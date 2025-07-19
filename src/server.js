@@ -41,6 +41,7 @@ class YWebsocketServer {
 
 /**
  * @param {Object} opts
+ * @param {string} [opts.host]
  * @param {number} opts.port
  * @param {import('./storage.js').AbstractStorage} opts.store
  * @param {string} [opts.redisPrefix]
@@ -52,6 +53,7 @@ class YWebsocketServer {
  */
 export const createYWebsocketServer = async ({
   redisPrefix = 'y',
+  host = 'localhost',
   port,
   store,
   checkPermCallbackUrl,
@@ -82,7 +84,7 @@ export const createYWebsocketServer = async ({
   }, { redisPrefix, initDocCallback })
 
   await promise.create((resolve, reject) => {
-    app.listen(port, (token) => {
+    app.listen(host, port, (token) => {
       if (token) {
         logging.print(logging.GREEN, '[y-redis] Listening to port ', port)
         resolve()
