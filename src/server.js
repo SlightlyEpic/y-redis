@@ -2,9 +2,7 @@ import * as uws from 'uws'
 import * as env from 'lib0/environment'
 import * as logging from 'lib0/logging'
 import * as error from 'lib0/error'
-import * as jwt from 'lib0/crypto/jwt'
-import * as ecdsa from 'lib0/crypto/ecdsa'
-import * as json from 'lib0/json'
+import { importJWK, jwtVerify } from 'jose';
 import { registerYWebsocketServer } from '../src/ws.js'
 import * as promise from 'lib0/promise'
 
@@ -16,10 +14,7 @@ while(!wsServerPublicKey) {
     console.log(`Fetching JWK from ${jwkEndpoint}`);
     const jwkResponse = await fetch(jwkEndpoint);
     const jwkJson = await jwkResponse.json();
-    wsServerPublicKey = await crypto.subtle.importKey('jwk', jwkJson, {
-      name: "Ed25519",
-      namedCurve: "Ed25519"
-    }, false, ['verify']);
+    wsServerPublicKey = await importJWK(jwkJson, 'EdDSA');
   } catch(/**@type{any} */ e) {
     console.log(`Error while fetching jwk: ${e?.message}\n. Retrying in 15 seconds`);
     await new Promise(r => setTimeout(r, 15_000));
@@ -69,7 +64,10 @@ export const createYWebsocketServer = async ({
       throw new Error('Missing Token')
     }
     // verify that the user has a valid token
-    const { payload: userToken } = await jwt.verifyJwt(wsServerPublicKey, token)
+    // const { payload: userToken } = await jwt.verifyJwt(wsServerPublicKey, token)
+    const { payload: userToken } = await jwtVerify(token, wsServerPublicKey, {
+      algorithms: ['EdDSA']
+    })
     if (userToken.yuserid == null) {
       throw new Error('Missing userid in user token!')
     }
